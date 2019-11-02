@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #260801;
+    background-color: #BF8173;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var wheelchair;
+var bricks = [];
+var score;
+
+function startGame() {
+    wheelchair = new component(30, 30, "white", 20, 130);
+    score = new component("20px", "helvetica", "white", 400, 40, "text");
+    gameBoard.start();
+}
+
+var gameBoard = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 550;
+        this.canvas.height = 300;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+        },
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    }
+}
+
+function component(width, height, color, x, y, type) {
+    this.type = type;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y;    
+    this.update = function() {
+        ctx = gameBoard.context;
+        if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+        } else {
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    this.newPos = function() {
+        this.x += this.speedX;
+        this.y += this.speedY;        
+    }
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + (otherobj.width);
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
+    }
+}
+
+function updateGameArea() {
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+    for (i = 0; i < bricks.length; i += 1) {
+        if (wheelchair.crashWith(bricks[i])) {
+            gameBoard.stop();
+            return;
+        } 
+    }
+    gameBoard.clear();
+    gameBoard.frameNo += 1;
+    if (gameBoard.frameNo == 1 || everyinterval(200)) {
+        x = gameBoard.canvas.width;
+        minHeight = 20;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 60;
+        maxGap = 200;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+        bricks.push(new component(60, height, "#591E18", x, 0));
+        bricks.push(new component(60, x - height - gap, "#591E18", x, height + gap));
+    }
+    for (i = 0; i < bricks.length; i += 1) {
+        bricks[i].speedX = -1;
+        bricks[i].newPos();
+        bricks[i].update();
+    }
+    score.text="SCORE: " + gameBoard.frameNo;
+    score.update();
+    wheelchair.newPos();    
+    wheelchair.update();
+}
+
+function everyinterval(n) {
+    if ((gameBoard.frameNo / n) % 1 == 0) {return true;}
+    return false;
+}
+
+function moveup() {
+    wheelchair.speedY = -1.5; 
+}
+
+function movedown() {
+    wheelchair.speedY = 1.5; 
+}
+
+function moveleft() {
+    wheelchair.speedX = -1.5; 
+}
+
+function moveright() {
+    wheelchair.speedX = 1.5; 
+}
+
+function clearmove() {
+    wheelchair.speedX = 0; 
+    wheelchair.speedY = 0; 
+}
+</script>
+	<div style="text-align:center;width:480px;">
+  <button onmousedown="moveup()" onmouseup="clearmove()" ontouchstart="moveup()">UP</button><br>
+	<p>
+		<button onmousedown="moveleft()" onmouseup="clearmove()" ontouchstart="moveleft()">LEFT</button>  
+  <button onmousedown="moveright()" onmouseup="clearmove()" ontouchstart="moveright()">RIGHT</button></p>
+  <button onmousedown="movedown()" onmouseup="clearmove()" ontouchstart="movedown()">DOWN</button>
+</div>
+</body>
+</html>
+
